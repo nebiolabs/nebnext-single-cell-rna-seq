@@ -1,5 +1,7 @@
 # Adapter trimming directions for NEBNext Single Cell/Low Input RNA Library Prep Kit for Illumina
 
+## Paired-end reads
+
 For adapter trimming, we recommend Flexbar v3.3.0 or later, an open-source tool. To download Flexbar and for program usage, please visit [the Flexbar GitHub page](https://github.com/seqan/flexbar). Once Flexbar is installed, adapters can be trimmed with the following 2-step command.
 
 ```
@@ -39,3 +41,41 @@ Homopolymers adjacent to the template-switching oligo are trimmed as well, as sp
 Keeping a short minimum read length after trimming (`--min-read-length 2`) keeps informative long reads, whose mates may be short after trimming. The default parameter `--threads 1` can be adjusted to a higher number depending on your machine.
 
 In our tests, trimming with flexbar takes 1-2 minutes for 1 million 2x75 read pairs input fastq files on an m4.2xlarge AWS instance (8 core, 32 GB RAM, Intel Xeon E5-2676 v3 processor, 2.4 GHz), using `--threads 4`.
+
+## Single-end reads
+
+The library prep kit and the adapter trimming method were developed and tested using paired-end reads. We therefore recommend paired-end, rather than single-end sequencing. The directions below are listed solely as a convenience for the users who, for whatever reason, choose to do single-end sequencing, and should not be taken as a recommendation to do single-end sequencing with this library prep kit. These directions have been tested less extensively than the directions for paired-end reads (above).
+
+```
+flexbar --reads test_input_reads_1.fastq \
+        --stdout-reads \
+        --adapters tso_g_wo_hp.fasta \
+        --adapter-trim-end LEFT \
+        --adapter-revcomp ON \
+        --adapter-revcomp-end RIGHT \
+        --htrim-left GT \
+        --htrim-right CA \
+        --htrim-min-length 3 \
+        --htrim-max-length 5 \
+        --htrim-max-first \
+        --htrim-adapter \
+        --min-read-length 2 \
+        --threads 1 | \
+    flexbar \
+        --reads - \
+        --target output_reads \
+        --adapters ilmn_20_2_seqs.fasta \
+        --adapter-trim-end RIGHT \
+        --min-read-length 2 \
+        --threads 1
+```
+
+Note that the single-end commands are identical to the paired-end ones, except they omit these 2 lines:
+
+```
+        --reads2 input_reads_2.fastq \
+```
+and
+```
+        --interleaved \
+```
